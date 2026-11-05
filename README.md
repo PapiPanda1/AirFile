@@ -50,7 +50,7 @@ curl -X POST --data-binary @photo.jpg \
 
 ## Releasing
 
-Push a tag like `v0.1.0`. The **Release** workflow builds an APK and attaches it to a GitHub Release. To sign with your own key, add these repository secrets: `KEYSTORE_BASE64` (base64 of your `.jks`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Without them the APK is signed with the debug key, which is fine for sideloading.
+Push a tag like `v0.1.0` (or `0.1.0`), or run the Release workflow by hand from the Actions tab with an existing tag. The **Release** workflow builds an APK and attaches it to a GitHub Release. To sign with your own key, add these repository secrets: `KEYSTORE_BASE64` (base64 of your `.jks`), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Without them the APK is signed with the debug key, which is fine for sideloading.
 
 ## Notes
 
