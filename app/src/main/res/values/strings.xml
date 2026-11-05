@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AirFile</string>
+    <string name="notification_channel">File receiver</string>
+    <string name="notification_title">AirFile is ready to receive files</string>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paper airplane: upper wing, lower wing, and the underside fold. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,52 L82,28 L50,60 Z" />
+    <path
+        android:fillColor="#D6E4FF"
+        android:pathData="M82,28 L62,80 L50,60 Z" />
+    <path
+        android:fillColor="#9DB8F0"
+        android:pathData="M50,60 L62,80 L50,74 Z" />
+</vector>

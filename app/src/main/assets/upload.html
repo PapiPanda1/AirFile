@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AirFile</title>
+<style>
+  :root { color-scheme: light dark; --blue: #1a73e8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Roboto, sans-serif; background: #0b1b3a; color: #fff;
+         min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; }
+  h1 { margin: 8px 0 4px; font-size: 28px; display: flex; align-items: center; gap: 10px; }
+  p.sub { margin: 0 0 20px; color: #b8c4dc; text-align: center; }
+  #drop { width: 100%; max-width: 520px; border: 2px dashed #5b7bb8; border-radius: 16px; padding: 36px 16px;
+          text-align: center; cursor: pointer; background: rgba(255,255,255,.04); }
+  #drop.over { border-color: #8ab4f8; background: rgba(138,180,248,.12); }
+  button { background: var(--blue); color: #fff; border: 0; border-radius: 999px; padding: 12px 24px; font-size: 16px; }
+  ul { list-style: none; padding: 0; margin: 20px 0 0; width: 100%; max-width: 520px; }
+  li { background: rgba(255,255,255,.06); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar { height: 6px; background: rgba(255,255,255,.15); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0; background: #8ab4f8; transition: width .15s; }
+  .ok .bar > div { background: #81c995; }
+  .err .bar > div { background: #f28b82; }
+  .msg { font-size: 12px; color: #b8c4dc; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <h1>
+    <svg width="32" height="32" viewBox="0 0 108 108" aria-hidden="true">
+      <rect width="108" height="108" rx="24" fill="#1a73e8"/>
+      <path fill="#fff" d="M26,52 L82,28 L50,60 Z"/>
+      <path fill="#d6e4ff" d="M82,28 L62,80 L50,60 Z"/>
+      <path fill="#9db8f0" d="M50,60 L62,80 L50,74 Z"/>
+    </svg>
+    AirFile
+  </h1>
+  <p class="sub">Send files straight to your TV.</p>
+
+  <div id="drop" tabindex="0">
+    <p>Tap to choose files, or drop them here</p>
+    <button type="button" id="pick">Choose files</button>
+    <input id="file" type="file" multiple hidden>
+  </div>
+  <ul id="list"></ul>
+
+<script>
+(function () {
+  var token = new URLSearchParams(location.search).get('t') || '';
+  var drop = document.getElementById('drop');
+  var input = document.getElementById('file');
+  var list = document.getElementById('list');
+  var queue = [];
+  var busy = false;
+
+  function human(n) {
+    if (n < 1024) return n + ' B';
+    var u = ['KB', 'MB', 'GB', 'TB'], i = -1;
+    do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+    return n.toFixed(1) + ' ' + u[i];
+  }
+
+  function add(files) {
+    Array.prototype.forEach.call(files, function (f) {
+      var li = document.createElement('li');
+      li.innerHTML = '<div class="row"><span class="name"></span><span class="size"></span></div>' +
+                     '<div class="bar"><div></div></div><div class="msg">Waiting…</div>';
+      li.querySelector('.name').textContent = f.name;
+      li.querySelector('.size').textContent = human(f.size);
+      list.prepend(li);
+      queue.push({ file: f, li: li });
+    });
+    next();
+  }
+
+  function next() {
+    if (busy || !queue.length) return;
+    busy = true;
+    var item = queue.shift();
+    var li = item.li, bar = li.querySelector('.bar > div'), msg = li.querySelector('.msg');
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/upload?t=' + encodeURIComponent(token) + '&name=' + encodeURIComponent(item.file.name));
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    xhr.upload.onprogress = function (e) {
+      if (e.lengthComputable) {
+        var pct = Math.round(e.loaded / e.total * 100);
+        bar.style.width = pct + '%';
+        msg.textContent = 'Sending… ' + pct + '%';
+      }
+    };
+    function done(ok, text) {
+      li.className = ok ? 'ok' : 'err';
+      if (ok) bar.style.width = '100%';
+      msg.textContent = text;
+      busy = false;
+      next();
+    }
+    xhr.onload = function () {
+      if (xhr.status === 200) done(true, 'Sent to TV ✓');
+      else done(false, 'Failed: ' + (xhr.responseText || xhr.status));
+    };
+    xhr.onerror = function () { done(false, 'Connection lost. Is the TV still on this Wi-Fi?'); };
+    xhr.send(item.file);
+  }
+
+  drop.addEventListener('click', function () { input.click(); });
+  drop.addEventListener('keydown', function (e) { if (e.key === 'Enter') input.click(); });
+  input.addEventListener('change', function () { add(input.files); input.value = ''; });
+  ['dragenter', 'dragover'].forEach(function (t) {
+    drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (t) {
+    drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function (e) { add(e.dataTransfer.files); });
+})();
+</script>
+</body>
+</html>
